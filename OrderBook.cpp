@@ -144,14 +144,25 @@
                     {
                         if (bid.price >= ask.price) // Match found
                         {
-                            // Create a new sale entry
-                            OrderBookEntry sale = {
+
+                            
+                                OrderBookEntry sale = {
                                 ask.price, 
                                 0, 
                                 timestamp, 
                                 product, 
-                                OrderBookType::sale}; 
-
+                                OrderBookType::asksale};                            // Create a new sale entry
+                            if (bid.username == "simuser")
+                            {
+                                sale.username = "simuser"; // Set the username for the sale
+                                sale.orderType = OrderBookType::bidsale; // If the bid is from the simuser, it's a sale
+                            }
+                            if (ask.username == "simuser")
+                            {
+                                sale.username = "simuser"; // Set the username for the sale
+                                sale.orderType = OrderBookType::asksale; // If the ask is from the simuser, it's a sale
+                            }
+                            
 
 
                             if (bid.amount == ask.amount)

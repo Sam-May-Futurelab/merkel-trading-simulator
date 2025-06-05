@@ -22,6 +22,9 @@ class Wallet
         /** Check if the wallet can fulfill an order */
         bool canFulfillOrder(OrderBookEntry order);
 
+        /** Process a sale, updating the wallet accordingly */
+        void processSale(OrderBookEntry& sale);
+
 
     private:
         std::map<std::string, double> currencies; // Map to store currency type and amount

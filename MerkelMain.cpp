@@ -24,6 +24,10 @@ void MerkelMain::init()
         if (input == 0) { // If getUserOption returned 0 (for "exit")
             break;        // Break out of the while loop
         }
+        if (input == -1) {
+            // Invalid input, skip processing and show menu again
+            continue;
+        }
         processUserOption(input);
     }
 }
@@ -106,6 +110,8 @@ void MerkelMain::enterAsk()
 
             std::cout << "Created ask order: " << tokens[0] << " price: " << tokens[1] << " amount: " << tokens[2] << std::endl;
 
+            newOrder.username = "simuser"; // Set a default username for the order
+
             if (wallet.canFulfillOrder(newOrder)) // Check if the wallet can fulfill the order
             {
                 std::cout << "Wallet looks good. " << std::endl;
@@ -148,6 +154,8 @@ void MerkelMain::enterBid()
                                                               "bid");
 
             std::cout << "Created bid order: " << tokens[0] << " price: " << tokens[1] << " amount: " << tokens[2] << std::endl;
+
+            newOrder.username = "simuser";
 
             if (wallet.canFulfillOrder(newOrder)) // Check if the wallet can fulfill the order
             {
@@ -216,6 +224,10 @@ void MerkelMain::processUserOption(int userOption)
             for (OrderBookEntry& sale : sales)
             {
                 std::cout << "Sale price: " << sale.price << " amount " << sale.amount << std::endl;
+                if (sale.username == "simuser")
+                {
+                    wallet.processSale(sale); // Process the sale in the wallet
+                }
             }
 
             currentTime = orderBook.getNextTime(currentTime); // Update current time to the next time frame
