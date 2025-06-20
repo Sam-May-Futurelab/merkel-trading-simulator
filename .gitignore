@@ -1,0 +1,19 @@
+# Compiled executables
+*.exe
+*.out
+*.o
+
+# Large data files
+weather_data.csv
+
+# IDE files
+.vscode/
+.vs/
+
+# System files and temporary files
+.DS_Store
+Thumbs.db
+
+*.tmp
+*.bak
+*~
