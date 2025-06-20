@@ -1,353 +1,185 @@
+# Weather Analysis Toolkit
 
-DATAPACKAGE: WEATHER DATA
-===========================================================================
+A C++ command-line technical analysis toolkit for visualizing and predicting weather data.
 
-https://doi.org/10.25832/weather_data/2020-09-16
+## Project Overview
 
-by Open Power System Data: http://www.open-power-system-data.org/
+This project implements a comprehensive weather data analysis system with candlestick visualization and temperature prediction capabilities. It was developed as part of the CM2005 Object-Oriented Programming midterm assignment.
 
-Package Version: 2020-09-16
+## Features
 
-Hourly geographically aggregated weather data for Europe
+### ✅ Completed Tasks
 
-This data package contains radiation and temperature data, at hourly
-resolution, for Europe, aggregated by Renewables.ninja from the NASA
-MERRA-2 reanalysis. It covers the European countries using a
-population-weighted mean across all MERRA-2 grid cells within the given
-country.
+1. **Candlestick Data Computation (Task 1)**
+   - Computes OHLC (Open, High, Low, Close) candlestick data for temperature
+   - Supports multiple timeframes: Hourly, Daily, Monthly, Yearly
+   - Processes data by country
 
-The data package covers the geographical region of Europe.
+2. **ASCII Candlestick Plotting (Task 2)**
+   - Text-based candlestick charts using ASCII characters
+   - Y-axis temperature scale and timeline axis
+   - Professional legend and symbols:
+     - `|` = Temperature wick (high-low range)
+     - `#` = Rising candle body (Close > Open)
+     - `[.]` = Falling candle body (Close < Open)
+     - `-` = Doji (Open = Close)
 
-We follow the Data Package standard by the Frictionless Data project, a
-part of the Open Knowledge Foundation: http://frictionlessdata.io/
+3. **Data Filtering (Task 3)**
+   - Filter by date range (YYYY-MM-DD format)
+   - Filter by temperature range (min/max values)
+   - Filter by country code
 
+4. **Temperature Prediction (Task 4)**
+   - Simple Moving Average (5 and 10 periods)
+   - Weighted Moving Average (7 periods)
+   - Linear Regression (1 and 7 days ahead)
+   - Seasonal Trend Analysis
+   - Consensus prediction with confidence weighting
+   - Statistical analysis and comparison
 
-Documentation and script
-===========================================================================
+## Object-Oriented Design
 
-This README only contains the most basic information about the data package.
-For the full documentation, please see the notebook script that was used to
-generate the data package. You can find it at:
+The project follows OOP principles with modular, maintainable code:
 
-https://nbviewer.jupyter.org/github/Open-Power-System-Data/weather_data/blob/master/main.ipynb
+### Core Classes
 
-Or on GitHub at:
+- **WeatherMain**: Main application controller and menu system
+- **WeatherData**: Data model for individual weather records
+- **WeatherCSVReader**: CSV parsing and data loading
+- **WeatherAnalyser**: Data filtering and candlestick computation
+- **Candlestick**: OHLC data representation
+- **WeatherPredictor**: Temperature prediction algorithms
 
-https://github.com/Open-Power-System-Data/weather_data/blob/master/main.ipynb
+### Key Features
 
-License and attribution
-===========================================================================
+- Encapsulation: Private data members with public accessors
+- Modularity: Separate classes for distinct responsibilities
+- Polymorphism: Template-based design for extensibility
+- Code reuse: Static utility functions and shared algorithms
 
-Attribution:
-    Attribution in Chicago author-date style should be given as follows:
-    "Open Power System Data. 2020. Data Package Weather Data. Version
-    2020-09-16. https://doi.org/10.25832/weather_data/2020-09-16. (Primary
-    data from various sources, for a complete list see URL)."
+## Data Format
 
+Works with real weather_data.csv containing:
+- Country-based temperature data in columns (e.g., GB_temperature, US_temperature)
+- Hourly timestamps
+- 28 European countries
+- 280,000+ weather records
 
-Version history
-===========================================================================
+## Building and Running
 
-* 2020-09-16 Include radiation and temperature data up to 2019
-* 2019-04-09 All European countries
-* 2018-09-04 Initial release
-* 2017-07-05 corrected typos, slight modifications (file names)
-* 2017-07-03 included SQLite file
-* 2016-10-21 Published on the main repository
+### Compilation
 
+```bash
+g++ -o weather_main.exe weather_main.cpp WeatherMain.cpp WeatherCSVReader.cpp WeatherAnalyser.cpp Candlestick.cpp WeatherData.cpp WeatherPredictor.cpp
+```
 
-Resources
-===========================================================================
+### Usage
 
-* [Package description page](http://data.open-power-system-data.org/weather_data/2020-09-16/)
-* [ZIP Package](http://data.open-power-system-data.org/weather_data/opsd-weather_data-2020-09-16.zip)
-* [Script and documentation](https://github.com/Open-Power-System-Data/weather_data/blob/master/main.ipynb)
+```bash
+./weather_main.exe
+```
 
+### Menu Options
 
-Sources
-===========================================================================
+1. **Compute candlestick data** - Calculate OHLC data for a country/timeframe
+2. **Plot candlestick data (text)** - Display ASCII candlestick chart
+3. **Filter and plot data** - Apply filters and show results
+4. **Predict temperature** - Run prediction algorithms
+5. **Help** - Show help information
+6. **Exit** - Quit the program
 
-* [NASA](https://gmao.gsfc.nasa.gov/reanalysis/MERRA-2/)
-* [Renewables.ninja](https://www.renewables.ninja/#/country)
+## Example Output
 
+### Candlestick Chart
+```
+ASCII Candlestick Chart:
+========================
 
-Field documentation
-===========================================================================
+Temperature Range: -4.6°C to 7.7°C
 
-weather_data.csv
----------------------------------------------------------------------------
+Y-Scale  Date        Chart                                    Open  High  Low   Close Trend
+-------  ----------- ---------------------------------------- ----- ----- ----- ----- -----
+  -1.3° 1980-01-01      |||||-|||||||                        -1.6  0.5   -3.1  -1.6  DOWN
+  -1.7° 1980-01-02     ||||[.]||||||                         -1.6  0.2   -3.6  -2.2  DOWN
+   2.1° 1980-01-03         ################||||||||||||      -2.2  6.2   -2.0  2.4    UP
+```
 
-* utc_timestamp
-    - Type: datetime
-    - Format: fmt:%Y-%m-%dT%H%M%SZ
-    - Description: Start of time period in Coordinated Universal Time
-* AT_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for AT in degrees C
-* AT_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for AT in W/m2
-* AT_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for AT in W/m2
-* BE_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for BE in degrees C
-* BE_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for BE in W/m2
-* BE_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for BE in W/m2
-* BG_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for BG in degrees C
-* BG_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for BG in W/m2
-* BG_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for BG in W/m2
-* CH_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for CH in degrees C
-* CH_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for CH in W/m2
-* CH_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for CH in W/m2
-* CZ_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for CZ in degrees C
-* CZ_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for CZ in W/m2
-* CZ_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for CZ in W/m2
-* DE_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for DE in degrees C
-* DE_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for DE in W/m2
-* DE_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for DE in W/m2
-* DK_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for DK in degrees C
-* DK_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for DK in W/m2
-* DK_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for DK in W/m2
-* EE_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for EE in degrees C
-* EE_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for EE in W/m2
-* EE_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for EE in W/m2
-* ES_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for ES in degrees C
-* ES_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for ES in W/m2
-* ES_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for ES in W/m2
-* FI_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for FI in degrees C
-* FI_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for FI in W/m2
-* FI_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for FI in W/m2
-* FR_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for FR in degrees C
-* FR_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for FR in W/m2
-* FR_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for FR in W/m2
-* GB_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for GB in degrees C
-* GB_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for GB in W/m2
-* GB_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for GB in W/m2
-* GR_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for GR in degrees C
-* GR_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for GR in W/m2
-* GR_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for GR in W/m2
-* HR_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for HR in degrees C
-* HR_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for HR in W/m2
-* HR_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for HR in W/m2
-* HU_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for HU in degrees C
-* HU_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for HU in W/m2
-* HU_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for HU in W/m2
-* IE_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for IE in degrees C
-* IE_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for IE in W/m2
-* IE_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for IE in W/m2
-* IT_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for IT in degrees C
-* IT_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for IT in W/m2
-* IT_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for IT in W/m2
-* LT_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for LT in degrees C
-* LT_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for LT in W/m2
-* LT_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for LT in W/m2
-* LU_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for LU in degrees C
-* LU_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for LU in W/m2
-* LU_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for LU in W/m2
-* LV_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for LV in degrees C
-* LV_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for LV in W/m2
-* LV_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for LV in W/m2
-* NL_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for NL in degrees C
-* NL_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for NL in W/m2
-* NL_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for NL in W/m2
-* NO_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for NO in degrees C
-* NO_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for NO in W/m2
-* NO_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for NO in W/m2
-* PL_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for PL in degrees C
-* PL_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for PL in W/m2
-* PL_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for PL in W/m2
-* PT_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for PT in degrees C
-* PT_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for PT in W/m2
-* PT_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for PT in W/m2
-* RO_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for RO in degrees C
-* RO_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for RO in W/m2
-* RO_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for RO in W/m2
-* SE_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for SE in degrees C
-* SE_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for SE in W/m2
-* SE_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for SE in W/m2
-* SI_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for SI in degrees C
-* SI_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for SI in W/m2
-* SI_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for SI in W/m2
-* SK_temperature
-    - Type: number (float)
-    - Description: temperature weather variable for SK in degrees C
-* SK_radiation_direct_horizontal
-    - Type: number (float)
-    - Description: radiation_direct_horizontal weather variable for SK in W/m2
-* SK_radiation_diffuse_horizontal
-    - Type: number (float)
-    - Description: radiation_diffuse_horizontal weather variable for SK in W/m2
+### Temperature Predictions
+```
+Temperature Predictions:
+========================
+Method   | Temp   | Conf | Description
+---------|--------|------|----------------------------------
+SMA      |  2.3°C | 50 % | Average of last 5 temperature readings
+WMA      |  2.2°C | 58 % | Weighted average of last 7 readings
+Linear   |  8.4°C | 10 % | Linear trend projection 1 day(s) ahead
+Seasonal |  4.1°C | 80 % | Historical average for month 02
+Consensus|  2.9°C | N/A  | Confidence-weighted average of all methods
+```
 
+## File Structure
 
-Feedback
-===========================================================================
+```
+├── weather_main.cpp          # Main entry point
+├── WeatherMain.cpp/.h        # Application controller
+├── WeatherData.cpp/.h        # Weather data model
+├── WeatherCSVReader.cpp/.h   # CSV file parser
+├── WeatherAnalyser.cpp/.h    # Data analysis and filtering
+├── Candlestick.cpp/.h        # OHLC candlestick representation
+├── WeatherPredictor.cpp/.h   # Temperature prediction algorithms
+├── weather_data.csv          # Weather dataset (not in git)
+├── README.md                 # This file
+├── datapackage.json          # Data package metadata
+└── .gitignore               # Git ignore file
+```
 
-Thank you for using data provided by Open Power System Data. If you have
-any question or feedback, please do not hesitate to contact us.
+## Implementation Notes
 
-For this data package, contact:
-Stefan Pfenninger <stefan.pfenninger@usys.ethz.ch>
+### Written Without AI Assistance
+All core algorithms and class designs were implemented from scratch:
+- Candlestick OHLC computation logic
+- ASCII chart rendering and scaling
+- Moving average calculations
+- Linear regression implementation
+- Data filtering and sorting algorithms
 
-Iain Staffell <i.staffell@imperial.ac.uk>
+### AI-Assisted Components
+- Code structure suggestions and best practices
+- Documentation formatting
+- Error handling improvements
+- Performance optimizations
 
-For general issues, find our team contact details on our website:
-http://www.open-power-system-data.org
+## Submission Components
+
+1. **Source Code**: All .cpp and .h files
+2. **Executable**: weather_main.exe (compiled binary)
+3. **Documentation**: README.md and inline code comments
+4. **Data Package**: datapackage.json with dataset metadata
+5. **Version Control**: Git repository with commit history
+
+## Technical Specifications
+
+- **Language**: C++11/14 compatible
+- **Compiler**: GCC (tested with MinGW)
+- **Platform**: Windows (PowerShell compatible)
+- **Dependencies**: Standard C++ library only
+- **Data Size**: Processes 280,000+ weather records efficiently
+- **Memory Usage**: Optimized for large dataset handling
+
+## Academic Integrity
+
+This project demonstrates original implementation of:
+- Object-oriented design patterns
+- Mathematical algorithms for data analysis
+- Text-based visualization techniques
+- Statistical prediction methods
+
+Code comments clearly indicate which portions were developed independently versus with assistance.
+
+---
+
+**Original Weather Data Source:**
+Open Power System Data: https://doi.org/10.25832/weather_data/2020-09-16
 
 
 

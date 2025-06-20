@@ -21,6 +21,13 @@ void WeatherMain::init()
         printMenu();
         userOption = getUserOption();
         processUserOption(userOption);
+        
+        // Add a small pause to prevent overwhelming output in case of issues
+        if (userOption == 0)
+        {
+            std::cout << "Press Enter to continue...";
+            std::cin.get();
+        }
     }
 }
 
@@ -122,11 +129,9 @@ void WeatherMain::plotCandlestickData()
     tempRange = maxTemp - minTemp;
     
     const int chartWidth = 40;
-    
-    std::cout << "Temperature Range: " << std::fixed << std::setprecision(1) 
-              << minTemp << "°C to " << maxTemp << "°C" << std::endl;
-    
-    // Print Y-axis scale
+      std::cout << "Temperature Range: " << std::fixed << std::setprecision(1) 
+              << minTemp << "C to " << maxTemp << "C" << std::endl;
+      // Print Y-axis scale
     std::cout << "\nY-Scale  Date        Chart                                    Open  High  Low   Close Trend" << std::endl;
     std::cout << "-------  ----------- ---------------------------------------- ----- ----- ----- ----- -----" << std::endl;
     
@@ -136,7 +141,7 @@ void WeatherMain::plotCandlestickData()
         
         // Print Y-axis tick (temperature at middle of candle range)
         double midTemp = (candle.getHigh() + candle.getLow()) / 2.0;
-        std::cout << std::setw(6) << std::fixed << std::setprecision(1) << midTemp << "° ";
+        std::cout << std::setw(6) << std::fixed << std::setprecision(1) << midTemp << "C ";
         
         // Print date (first 11 chars)
         std::string date = candle.getDate();
@@ -211,11 +216,10 @@ void WeatherMain::plotCandlestickData()
     // Print temperature scale below
     std::cout << "         ";
     std::cout << std::string(11, ' ') << " ";
-    for (int i = 0; i < chartWidth; i += 8) {
-        double tempAtPos = minTemp + (static_cast<double>(i) / (chartWidth - 1)) * tempRange;
+    for (int i = 0; i < chartWidth; i += 8) {        double tempAtPos = minTemp + (static_cast<double>(i) / (chartWidth - 1)) * tempRange;
         std::cout << std::setw(8) << std::fixed << std::setprecision(1) << tempAtPos;
     }
-    std::cout << "°C" << std::endl;
+    std::cout << "C" << std::endl;
       std::cout << "\nLegend:" << std::endl;
     std::cout << "| = Temperature wick (high-low range)" << std::endl;
     std::cout << "# = Rising candle body (Close > Open)" << std::endl;
@@ -284,10 +288,9 @@ void WeatherMain::filterAndPlotData()
     // Show sample of filtered data
     int showCount = std::min(10, static_cast<int>(filteredData.size()));
     for (int i = 0; i < showCount; ++i)
-    {
-        std::cout << filteredData[i].getTimestamp() << " " 
+    {        std::cout << filteredData[i].getTimestamp() << " " 
                   << filteredData[i].getCountry() << " " 
-                  << filteredData[i].getTemperature() << "°C" << std::endl;
+                  << filteredData[i].getTemperature() << "C" << std::endl;
     }
 }
 
@@ -356,9 +359,8 @@ void WeatherMain::predictTemperature()
     // Show recent temperature trend
     std::cout << "\nRecent Temperature Trend (last 10 records):" << std::endl;
     int showCount = std::min(10, static_cast<int>(countryData.size()));
-    for (int i = countryData.size() - showCount; i < static_cast<int>(countryData.size()); ++i) {
-        std::cout << countryData[i].getTimestamp() << ": " 
-                  << std::fixed << std::setprecision(1) << countryData[i].getTemperature() << "°C" << std::endl;
+    for (int i = countryData.size() - showCount; i < static_cast<int>(countryData.size()); ++i) {        std::cout << countryData[i].getTimestamp() << ": " 
+                  << std::fixed << std::setprecision(1) << countryData[i].getTemperature() << "C" << std::endl;
     }
     
     // Generate all predictions
@@ -381,11 +383,10 @@ void WeatherMain::predictTemperature()
     double stdDev = WeatherPredictor::calculateStandardDeviation(temperatures);
     double minTemp = *std::min_element(temperatures.begin(), temperatures.end());
     double maxTemp = *std::max_element(temperatures.begin(), temperatures.end());
-    
-    std::cout << "Historical Statistics for " << country << ":" << std::endl;
-    std::cout << "Mean Temperature: " << std::fixed << std::setprecision(1) << mean << "°C" << std::endl;
-    std::cout << "Standard Deviation: " << stdDev << "°C" << std::endl;
-    std::cout << "Temperature Range: " << minTemp << "°C to " << maxTemp << "°C" << std::endl;
+      std::cout << "Historical Statistics for " << country << ":" << std::endl;
+    std::cout << "Mean Temperature: " << std::fixed << std::setprecision(1) << mean << "C" << std::endl;
+    std::cout << "Standard Deviation: " << stdDev << "C" << std::endl;
+    std::cout << "Temperature Range: " << minTemp << "C to " << maxTemp << "C" << std::endl;
     
     // Recent vs historical comparison
     if (countryData.size() >= 30) {
@@ -396,9 +397,8 @@ void WeatherMain::predictTemperature()
         
         double recentMean = WeatherPredictor::calculateMean(recentTemps);
         double difference = recentMean - mean;
-        
-        std::cout << "Recent 30-day average: " << std::fixed << std::setprecision(1) << recentMean << "°C ";
-        std::cout << "(" << (difference > 0 ? "+" : "") << difference << "°C vs historical)" << std::endl;
+          std::cout << "Recent 30-day average: " << std::fixed << std::setprecision(1) << recentMean << "C ";
+        std::cout << "(" << (difference > 0 ? "+" : "") << difference << "C vs historical)" << std::endl;
     }
 }
 
@@ -406,20 +406,56 @@ int WeatherMain::getUserOption()
 {
     int userOption = 0;
     std::string line;
-    std::cout << "user> ";
-    std::getline(std::cin, line);
     
-    // Debug: Show what we actually read
-    std::cout << "Read: '" << line << "'" << std::endl;
-    
-    try
+    while (true)
     {
-        userOption = std::stoi(line);
-    }
-    catch (const std::exception& e)
-    {
-        // Invalid input, return 0
-        std::cout << "Invalid input, returning 0" << std::endl;
+        std::cout << "user> ";
+        std::cout.flush(); // Ensure prompt is displayed
+        
+        // Check if input stream is in good state
+        if (!std::cin.good())
+        {
+            std::cout << "Input stream error detected. Clearing and trying again..." << std::endl;
+            std::cin.clear();
+            std::cin.ignore(10000, '\n'); // Clear any remaining input
+            continue;
+        }
+        
+        if (!std::getline(std::cin, line))
+        {
+            // Handle EOF or input error
+            if (std::cin.eof())
+            {
+                std::cout << "\nEnd of input detected. Exiting..." << std::endl;
+                exit(0);
+            }
+            else
+            {
+                std::cout << "Input error. Please try again." << std::endl;
+                std::cin.clear();
+                continue;
+            }
+        }
+        
+        // Debug: Show what we actually read (remove this line after fixing)
+        std::cout << "Read: '" << line << "'" << std::endl;
+        
+        // Check for empty input
+        if (line.empty())
+        {
+            std::cout << "Empty input. Please enter a number between 1-6." << std::endl;
+            continue;
+        }
+        
+        try
+        {
+            userOption = std::stoi(line);
+            break; // Successfully got a number, exit the loop
+        }
+        catch (const std::exception& e)
+        {
+            std::cout << "Invalid input '" << line << "'. Please enter a number between 1-6." << std::endl;
+        }
     }
     
     return userOption;
