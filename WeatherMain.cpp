@@ -1,5 +1,6 @@
 #include "WeatherMain.h"
 #include "WeatherCSVReader.h"
+#include "WeatherPredictor.h"
 #include <iostream>
 #include <string>
 #include <set>
@@ -95,11 +96,11 @@ void WeatherMain::plotCandlestickData()
         return;
     }
     
-    std::cout << "\nSimple ASCII Candlestick Chart:" << std::endl;
-    std::cout << "===============================\n" << std::endl;
+    std::cout << "\nASCII Candlestick Chart:" << std::endl;
+    std::cout << "========================\n" << std::endl;
     
-    // Limit to first 20 candlesticks for readability
-    size_t maxCandles = std::min(static_cast<size_t>(20), currentCandlesticks.size());
+    // Limit to first 15 candlesticks for readability
+    size_t maxCandles = std::min(static_cast<size_t>(15), currentCandlesticks.size());
     
     // Find temperature range for scaling
     double minTemp = currentCandlesticks[0].getLow();
@@ -111,61 +112,78 @@ void WeatherMain::plotCandlestickData()
         maxTemp = std::max(maxTemp, candle.getHigh());
     }
     
-    const int chartHeight = 15;
     double tempRange = maxTemp - minTemp;
     if (tempRange == 0) tempRange = 1; // Avoid division by zero
     
-    std::cout << "Temperature Range: " << std::fixed << std::setprecision(1) 
-              << minTemp << "C to " << maxTemp << "C" << std::endl;
-    std::cout << "Date        Chart                              Open  High  Low   Close Trend" << std::endl;
-    std::cout << "----------- ---------------------------------- ----- ----- ----- ----- -----" << std::endl;
+    // Add padding to temperature range for better visualization
+    double padding = tempRange * 0.1;
+    minTemp -= padding;
+    maxTemp += padding;
+    tempRange = maxTemp - minTemp;
     
-    // Create simple horizontal chart for each candlestick
+    const int chartWidth = 40;
+    
+    std::cout << "Temperature Range: " << std::fixed << std::setprecision(1) 
+              << minTemp << "°C to " << maxTemp << "°C" << std::endl;
+    
+    // Print Y-axis scale
+    std::cout << "\nY-Scale  Date        Chart                                    Open  High  Low   Close Trend" << std::endl;
+    std::cout << "-------  ----------- ---------------------------------------- ----- ----- ----- ----- -----" << std::endl;
+    
+    // Create chart for each candlestick
     for (size_t i = 0; i < maxCandles; ++i) {
         const auto& candle = currentCandlesticks[i];
+        
+        // Print Y-axis tick (temperature at middle of candle range)
+        double midTemp = (candle.getHigh() + candle.getLow()) / 2.0;
+        std::cout << std::setw(6) << std::fixed << std::setprecision(1) << midTemp << "° ";
         
         // Print date (first 11 chars)
         std::string date = candle.getDate();
         if (date.length() > 11) date = date.substr(0, 11);
         std::cout << std::setw(11) << std::left << date << " ";
         
-        // Create 34-character wide chart
-        std::string chart(34, ' ');
+        // Create chart
+        std::string chart(chartWidth, ' ');
         
-        // Calculate positions (0 to 33)
-        double range = maxTemp - minTemp;
-        if (range == 0) range = 1;
-        
-        int lowPos = static_cast<int>((candle.getLow() - minTemp) / range * 33);
-        int highPos = static_cast<int>((candle.getHigh() - minTemp) / range * 33);
-        int openPos = static_cast<int>((candle.getOpen() - minTemp) / range * 33);
-        int closePos = static_cast<int>((candle.getClose() - minTemp) / range * 33);
+        // Calculate positions (0 to chartWidth-1)
+        int lowPos = static_cast<int>((candle.getLow() - minTemp) / tempRange * (chartWidth - 1));
+        int highPos = static_cast<int>((candle.getHigh() - minTemp) / tempRange * (chartWidth - 1));
+        int openPos = static_cast<int>((candle.getOpen() - minTemp) / tempRange * (chartWidth - 1));
+        int closePos = static_cast<int>((candle.getClose() - minTemp) / tempRange * (chartWidth - 1));
         
         // Ensure positions are within bounds
-        lowPos = std::max(0, std::min(33, lowPos));
-        highPos = std::max(0, std::min(33, highPos));
-        openPos = std::max(0, std::min(33, openPos));
-        closePos = std::max(0, std::min(33, closePos));
+        lowPos = std::max(0, std::min(chartWidth - 1, lowPos));
+        highPos = std::max(0, std::min(chartWidth - 1, highPos));
+        openPos = std::max(0, std::min(chartWidth - 1, openPos));
+        closePos = std::max(0, std::min(chartWidth - 1, closePos));
         
-        // Draw the wick (line from low to high)
+        // Draw the wick (thin line from low to high)
         for (int j = lowPos; j <= highPos; ++j) {
-            chart[j] = '-';
+            chart[j] = '|';
         }
         
-        // Draw the body (between open and close)
+        // Draw the body (thick line between open and close)
         int bodyStart = std::min(openPos, closePos);
         int bodyEnd = std::max(openPos, closePos);
-        
-        char bodyChar = candle.isPositive() ? '#' : 'O';
-        for (int j = bodyStart; j <= bodyEnd; ++j) {
-            chart[j] = bodyChar;
+          // Use different symbols for rising vs falling candles
+        if (candle.isPositive()) {
+            // Rising candle: solid body
+            for (int j = bodyStart; j <= bodyEnd; ++j) {
+                chart[j] = '#';
+            }
+        } else {
+            // Falling candle: hollow body
+            if (bodyStart == bodyEnd) {
+                chart[bodyStart] = '-'; // Doji (open = close)
+            } else {
+                chart[bodyStart] = '[';
+                chart[bodyEnd] = ']';
+                for (int j = bodyStart + 1; j < bodyEnd; ++j) {
+                    chart[j] = '.';
+                }
+            }
         }
-        
-        // Mark exact points
-        if (lowPos < 34) chart[lowPos] = 'L';
-        if (highPos < 34) chart[highPos] = 'H';
-        if (openPos < 34 && chart[openPos] == ' ') chart[openPos] = '[';
-        if (closePos < 34 && chart[closePos] == ' ') chart[closePos] = ']';
         
         // Print the chart and values
         std::cout << chart << " ";
@@ -176,11 +194,33 @@ void WeatherMain::plotCandlestickData()
         std::cout << (candle.isPositive() ? " UP " : "DOWN") << std::endl;
     }
     
-    std::cout << "\nLegend:" << std::endl;    std::cout << "- = Temperature range (wick)" << std::endl;
+    // Print timeline axis
+    std::cout << "         ";
+    std::cout << std::string(11, ' ') << " ";
+    for (int i = 0; i < chartWidth; i += 8) {
+        std::cout << "----+---";
+        if (i + 8 >= chartWidth) {
+            // Fill remaining with dashes
+            for (int j = 0; j < (chartWidth - i - 8); ++j) {
+                std::cout << "-";
+            }
+        }
+    }
+    std::cout << std::endl;
+    
+    // Print temperature scale below
+    std::cout << "         ";
+    std::cout << std::string(11, ' ') << " ";
+    for (int i = 0; i < chartWidth; i += 8) {
+        double tempAtPos = minTemp + (static_cast<double>(i) / (chartWidth - 1)) * tempRange;
+        std::cout << std::setw(8) << std::fixed << std::setprecision(1) << tempAtPos;
+    }
+    std::cout << "°C" << std::endl;
+      std::cout << "\nLegend:" << std::endl;
+    std::cout << "| = Temperature wick (high-low range)" << std::endl;
     std::cout << "# = Rising candle body (Close > Open)" << std::endl;
-    std::cout << "O = Falling candle body (Close < Open)" << std::endl;
-    std::cout << "L = Low point, H = High point" << std::endl;
-    std::cout << "[ = Open, ] = Close" << std::endl;
+    std::cout << "[.] = Falling candle body (Close < Open)" << std::endl;
+    std::cout << "- = Doji (Open = Close)" << std::endl;
 }
 
 void WeatherMain::filterAndPlotData()
@@ -253,8 +293,113 @@ void WeatherMain::filterAndPlotData()
 
 void WeatherMain::predictTemperature()
 {
-    std::cout << "Temperature prediction feature coming soon!" << std::endl;
-    std::cout << "This will implement moving average and linear regression predictions." << std::endl;
+    std::cout << "\nTemperature Prediction Analysis" << std::endl;
+    std::cout << "===============================" << std::endl;
+    
+    // Get user input for prediction parameters
+    std::string country;
+    std::cout << "Enter country code for prediction (e.g., GB, US, DE): ";
+    std::getline(std::cin, country);
+    
+    if (country.empty()) {
+        std::cout << "No country specified. Using default: GB" << std::endl;
+        country = "GB";
+    }
+    
+    // Convert to uppercase
+    std::transform(country.begin(), country.end(), country.begin(), ::toupper);
+    
+    std::cout << "Loading historical data for " << country << "..." << std::endl;
+    
+    // Load data
+    std::vector<WeatherData> allData = WeatherCSVReader::readWeatherCSV("weather_data.csv");
+    
+    if (allData.empty()) {
+        std::cout << "Error: Could not load weather data." << std::endl;
+        return;
+    }
+    
+    // Filter data for the specified country
+    std::vector<WeatherData> countryData;
+    for (const auto& record : allData) {
+        if (record.getCountry() == country) {
+            countryData.push_back(record);
+        }
+    }
+    
+    if (countryData.empty()) {
+        std::cout << "No data found for country: " << country << std::endl;
+        std::cout << "Available countries in dataset: ";
+        
+        std::set<std::string> countries;
+        for (const auto& record : allData) {
+            countries.insert(record.getCountry());
+        }
+        
+        for (const auto& c : countries) {
+            std::cout << c << " ";
+        }
+        std::cout << std::endl;
+        return;
+    }
+    
+    // Sort data by date (should already be sorted, but ensure it)
+    std::sort(countryData.begin(), countryData.end(), 
+              [](const WeatherData& a, const WeatherData& b) {
+                  return a.getTimestamp() < b.getTimestamp();
+              });
+    
+    std::cout << "Found " << countryData.size() << " temperature records for " << country << std::endl;
+    std::cout << "Date range: " << countryData.front().getTimestamp() 
+              << " to " << countryData.back().getTimestamp() << std::endl;
+    
+    // Show recent temperature trend
+    std::cout << "\nRecent Temperature Trend (last 10 records):" << std::endl;
+    int showCount = std::min(10, static_cast<int>(countryData.size()));
+    for (int i = countryData.size() - showCount; i < static_cast<int>(countryData.size()); ++i) {
+        std::cout << countryData[i].getTimestamp() << ": " 
+                  << std::fixed << std::setprecision(1) << countryData[i].getTemperature() << "°C" << std::endl;
+    }
+    
+    // Generate all predictions
+    std::vector<WeatherPredictor::Prediction> predictions = WeatherPredictor::getAllPredictions(countryData);
+    
+    // Display predictions
+    WeatherPredictor::printAllPredictions(predictions);
+    
+    // Show additional analysis
+    std::cout << "\nAdditional Analysis:" << std::endl;
+    std::cout << "===================" << std::endl;
+    
+    // Calculate basic statistics
+    std::vector<double> temperatures;
+    for (const auto& record : countryData) {
+        temperatures.push_back(record.getTemperature());
+    }
+    
+    double mean = WeatherPredictor::calculateMean(temperatures);
+    double stdDev = WeatherPredictor::calculateStandardDeviation(temperatures);
+    double minTemp = *std::min_element(temperatures.begin(), temperatures.end());
+    double maxTemp = *std::max_element(temperatures.begin(), temperatures.end());
+    
+    std::cout << "Historical Statistics for " << country << ":" << std::endl;
+    std::cout << "Mean Temperature: " << std::fixed << std::setprecision(1) << mean << "°C" << std::endl;
+    std::cout << "Standard Deviation: " << stdDev << "°C" << std::endl;
+    std::cout << "Temperature Range: " << minTemp << "°C to " << maxTemp << "°C" << std::endl;
+    
+    // Recent vs historical comparison
+    if (countryData.size() >= 30) {
+        std::vector<double> recentTemps;
+        for (int i = countryData.size() - 30; i < static_cast<int>(countryData.size()); ++i) {
+            recentTemps.push_back(countryData[i].getTemperature());
+        }
+        
+        double recentMean = WeatherPredictor::calculateMean(recentTemps);
+        double difference = recentMean - mean;
+        
+        std::cout << "Recent 30-day average: " << std::fixed << std::setprecision(1) << recentMean << "°C ";
+        std::cout << "(" << (difference > 0 ? "+" : "") << difference << "°C vs historical)" << std::endl;
+    }
 }
 
 int WeatherMain::getUserOption()
