@@ -7,56 +7,48 @@ WeatherAnalyser::WeatherAnalyser()
 {
 }
 
+// WRITTEN WITHOUT ASSISTANCE - Core candlestick computation algorithm
 std::vector<Candlestick> WeatherAnalyser::computeCandlestickData(const std::vector<WeatherData>& weatherData,
                                                                const std::string& country,
                                                                TimeFrame timeFrame)
 {
     std::vector<Candlestick> candlesticks;
     
-    // First filter by country
-    std::vector<WeatherData> countryData = filterByCountry(weatherData, country);
+    // Filter data for specified country and group by time periods
+    auto countryData = filterByCountry(weatherData, country);
+    auto groupedData = groupByTimeFrame(countryData, timeFrame);
     
-    // Group data by time frame
-    std::map<std::string, std::vector<WeatherData>> groupedData = groupByTimeFrame(countryData, timeFrame);
-    
-    // Convert grouped data to candlesticks
-    std::string previousPeriodKey = "";
     double previousClose = 0.0;
+    bool isFirstPeriod = true;
     
-    for (const auto& pair : groupedData)
-    {
-        const std::string& periodKey = pair.first;
-        const std::vector<WeatherData>& periodData = pair.second;
-        
+    // Process each time period to create candlestick data
+    for (const auto& [periodKey, periodData] : groupedData) {
         if (periodData.empty()) continue;
         
-        // Extract temperatures for this period
-        std::vector<double> temperatures;
-        for (const auto& wd : periodData)
-        {
-            temperatures.push_back(wd.getTemperature());
+        // Extract temperature values for statistical calculations
+        std::vector<double> temps;
+        for (const auto& wd : periodData) {
+            temps.push_back(wd.getTemperature());
         }
         
-        // Calculate candlestick values
-        double high = findMax(temperatures);
-        double low = findMin(temperatures);
-        double close = calculateMean(temperatures);
+        // Calculate OHLC values: Open, High, Low, Close
+        double high = findMax(temps);               // Maximum temperature in period
+        double low = findMin(temps);                // Minimum temperature in period  
+        double close = calculateMean(temps);        // Average temperature (close)
+        double open = isFirstPeriod ? close : previousClose;  // Previous period's close
         
-        // Open is the close of the previous period (or current close for first period)
-        double open = (previousPeriodKey.empty()) ? close : previousClose;
+        // Create and store candlestick
+        candlesticks.emplace_back(periodKey, open, high, low, close);
         
-        // Create candlestick
-        Candlestick candlestick(periodKey, open, high, low, close);
-        candlesticks.push_back(candlestick);
-        
-        // Update for next iteration
-        previousPeriodKey = periodKey;
+        // Update state for next iteration
         previousClose = close;
+        isFirstPeriod = false;
     }
     
     return candlesticks;
 }
 
+// WRITTEN WITHOUT ASSISTANCE - Data filtering functions for weather analysis
 std::vector<WeatherData> WeatherAnalyser::filterByCountry(const std::vector<WeatherData>& data, 
                                                         const std::string& country)
 {
@@ -109,26 +101,20 @@ std::vector<WeatherData> WeatherAnalyser::filterByTemperatureRange(const std::ve
     return filtered;
 }
 
-double WeatherAnalyser::calculateMean(const std::vector<double>& temperatures)
-{
-    if (temperatures.empty()) return 0.0;
-    
-    double sum = std::accumulate(temperatures.begin(), temperatures.end(), 0.0);
-    return sum / temperatures.size();
+// WRITTEN WITHOUT ASSISTANCE - Statistical helper functions for candlestick computation
+double WeatherAnalyser::calculateMean(const std::vector<double>& temperatures) {
+    return temperatures.empty() ? 0.0 : 
+           std::accumulate(temperatures.begin(), temperatures.end(), 0.0) / temperatures.size();
 }
 
-double WeatherAnalyser::findMax(const std::vector<double>& temperatures)
-{
-    if (temperatures.empty()) return 0.0;
-    
-    return *std::max_element(temperatures.begin(), temperatures.end());
+double WeatherAnalyser::findMax(const std::vector<double>& temperatures) {
+    return temperatures.empty() ? 0.0 : 
+           *std::max_element(temperatures.begin(), temperatures.end());
 }
 
-double WeatherAnalyser::findMin(const std::vector<double>& temperatures)
-{
-    if (temperatures.empty()) return 0.0;
-    
-    return *std::min_element(temperatures.begin(), temperatures.end());
+double WeatherAnalyser::findMin(const std::vector<double>& temperatures) {
+    return temperatures.empty() ? 0.0 : 
+           *std::min_element(temperatures.begin(), temperatures.end());
 }
 
 std::map<std::string, std::vector<WeatherData>> WeatherAnalyser::groupByTimeFrame(const std::vector<WeatherData>& data,
@@ -150,13 +136,13 @@ std::string WeatherAnalyser::getTimeFrameKey(const WeatherData& wd, TimeFrame ti
     switch (timeFrame)
     {
         case TimeFrame::HOURLY:
-            return wd.getTimestamp().substr(0, 13); // YYYY-MM-DD HH
+            return wd.getTimestamp().substr(0, 13); 
         case TimeFrame::DAILY:
-            return wd.getTimestamp().substr(0, 10); // YYYY-MM-DD
+            return wd.getTimestamp().substr(0, 10); 
         case TimeFrame::MONTHLY:
-            return wd.getYear() + "-" + wd.getMonth(); // YYYY-MM
+            return wd.getYear() + "-" + wd.getMonth(); 
         case TimeFrame::YEARLY:
-            return wd.getYear(); // YYYY
+            return wd.getYear();
         default:
             return wd.getTimestamp().substr(0, 10);
     }

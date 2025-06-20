@@ -26,7 +26,7 @@ double WeatherData::getTemperature() const
 
 std::string WeatherData::getYear() const
 {
-    // Extract year from timestamp format: YYYY-MM-DD HH:MM
+    // Extract year from timestamp format is: YYYY-MM-DD HH:MM
     return timestamp.substr(0, 4);
 }
 
@@ -38,7 +38,7 @@ std::string WeatherData::getMonth() const
 
 std::string WeatherData::getDay() const
 {
-    // Extract day from timestamp format: YYYY-MM-DD HH:MM
+    // Extract day from timestamp the format is: YYYY-MM-DD HH:MM
     return timestamp.substr(8, 2);
 }
 
