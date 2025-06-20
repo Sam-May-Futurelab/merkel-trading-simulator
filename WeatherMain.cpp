@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <set>
+#include <iomanip>
+#include <algorithm>
 
 WeatherMain::WeatherMain()
 {
@@ -89,40 +91,96 @@ void WeatherMain::plotCandlestickData()
 {
     if (currentCandlesticks.empty())
     {
-        std::cout << "Please compute candlestick data first (option 2)." << std::endl;
+        std::cout << "Please compute candlestick data first (option 1)." << std::endl;
         return;
     }
     
-    std::cout << "Text-based candlestick plot:" << std::endl;
-    std::cout << "=============================" << std::endl;
+    std::cout << "\nSimple ASCII Candlestick Chart:" << std::endl;
+    std::cout << "===============================\n" << std::endl;
     
-    // Simple text plot implementation
-    for (const auto& candlestick : currentCandlesticks)
-    {
-        std::cout << candlestick.getDate() << " ";
-        
-        // Simple representation: + for positive, - for negative
-        if (candlestick.isPositive())
-        {
-            std::cout << "[+] ";
-        }
-        else
-        {
-            std::cout << "[-] ";
-        }
-        
-        // Show range with characters
-        std::cout << "Range: " << candlestick.getLow() << " |";
-        
-        // Body representation
-        int bodySize = static_cast<int>(candlestick.getBody() * 2);
-        for (int i = 0; i < bodySize && i < 10; ++i)
-        {
-            std::cout << (candlestick.isPositive() ? "+" : "-");
-        }
-        
-        std::cout << "| " << candlestick.getHigh() << std::endl;
+    // Limit to first 20 candlesticks for readability
+    size_t maxCandles = std::min(static_cast<size_t>(20), currentCandlesticks.size());
+    
+    // Find temperature range for scaling
+    double minTemp = currentCandlesticks[0].getLow();
+    double maxTemp = currentCandlesticks[0].getHigh();
+    
+    for (size_t i = 0; i < maxCandles; ++i) {
+        const auto& candle = currentCandlesticks[i];
+        minTemp = std::min(minTemp, candle.getLow());
+        maxTemp = std::max(maxTemp, candle.getHigh());
     }
+    
+    const int chartHeight = 15;
+    double tempRange = maxTemp - minTemp;
+    if (tempRange == 0) tempRange = 1; // Avoid division by zero
+    
+    std::cout << "Temperature Range: " << std::fixed << std::setprecision(1) 
+              << minTemp << "C to " << maxTemp << "C" << std::endl;
+    std::cout << "Date        Chart                              Open  High  Low   Close Trend" << std::endl;
+    std::cout << "----------- ---------------------------------- ----- ----- ----- ----- -----" << std::endl;
+    
+    // Create simple horizontal chart for each candlestick
+    for (size_t i = 0; i < maxCandles; ++i) {
+        const auto& candle = currentCandlesticks[i];
+        
+        // Print date (first 11 chars)
+        std::string date = candle.getDate();
+        if (date.length() > 11) date = date.substr(0, 11);
+        std::cout << std::setw(11) << std::left << date << " ";
+        
+        // Create 34-character wide chart
+        std::string chart(34, ' ');
+        
+        // Calculate positions (0 to 33)
+        double range = maxTemp - minTemp;
+        if (range == 0) range = 1;
+        
+        int lowPos = static_cast<int>((candle.getLow() - minTemp) / range * 33);
+        int highPos = static_cast<int>((candle.getHigh() - minTemp) / range * 33);
+        int openPos = static_cast<int>((candle.getOpen() - minTemp) / range * 33);
+        int closePos = static_cast<int>((candle.getClose() - minTemp) / range * 33);
+        
+        // Ensure positions are within bounds
+        lowPos = std::max(0, std::min(33, lowPos));
+        highPos = std::max(0, std::min(33, highPos));
+        openPos = std::max(0, std::min(33, openPos));
+        closePos = std::max(0, std::min(33, closePos));
+        
+        // Draw the wick (line from low to high)
+        for (int j = lowPos; j <= highPos; ++j) {
+            chart[j] = '-';
+        }
+        
+        // Draw the body (between open and close)
+        int bodyStart = std::min(openPos, closePos);
+        int bodyEnd = std::max(openPos, closePos);
+        
+        char bodyChar = candle.isPositive() ? '#' : 'O';
+        for (int j = bodyStart; j <= bodyEnd; ++j) {
+            chart[j] = bodyChar;
+        }
+        
+        // Mark exact points
+        if (lowPos < 34) chart[lowPos] = 'L';
+        if (highPos < 34) chart[highPos] = 'H';
+        if (openPos < 34 && chart[openPos] == ' ') chart[openPos] = '[';
+        if (closePos < 34 && chart[closePos] == ' ') chart[closePos] = ']';
+        
+        // Print the chart and values
+        std::cout << chart << " ";
+        std::cout << std::setw(5) << std::fixed << std::setprecision(1) << candle.getOpen() << " ";
+        std::cout << std::setw(5) << candle.getHigh() << " ";
+        std::cout << std::setw(5) << candle.getLow() << " ";
+        std::cout << std::setw(5) << candle.getClose() << " ";
+        std::cout << (candle.isPositive() ? " UP " : "DOWN") << std::endl;
+    }
+    
+    std::cout << "\nLegend:" << std::endl;    std::cout << "- = Temperature range (wick)" << std::endl;
+    std::cout << "# = Rising candle body (Close > Open)" << std::endl;
+    std::cout << "O = Falling candle body (Close < Open)" << std::endl;
+    std::cout << "L = Low point, H = High point" << std::endl;
+    std::cout << "[ = Open, ] = Close" << std::endl;
 }
 
 void WeatherMain::filterAndPlotData()
@@ -206,6 +264,9 @@ int WeatherMain::getUserOption()
     std::cout << "user> ";
     std::getline(std::cin, line);
     
+    // Debug: Show what we actually read
+    std::cout << "Read: '" << line << "'" << std::endl;
+    
     try
     {
         userOption = std::stoi(line);
@@ -213,6 +274,7 @@ int WeatherMain::getUserOption()
     catch (const std::exception& e)
     {
         // Invalid input, return 0
+        std::cout << "Invalid input, returning 0" << std::endl;
     }
     
     return userOption;
@@ -220,6 +282,8 @@ int WeatherMain::getUserOption()
 
 void WeatherMain::processUserOption(int userOption)
 {
+    std::cout << "Processing option: " << userOption << std::endl;
+    
     switch (userOption)
     {
         case 1:
@@ -241,7 +305,8 @@ void WeatherMain::processUserOption(int userOption)
             std::cout << "Goodbye!" << std::endl;
             exit(0);
             break;
-        default:            std::cout << "Invalid choice. Please try again." << std::endl;
+        default:
+            std::cout << "Invalid choice: " << userOption << ". Please try again." << std::endl;
             break;
     }
 }
@@ -273,3 +338,5 @@ std::string WeatherMain::getCountryFromUser()
     std::getline(std::cin, country);
     return country;
 }
+
+

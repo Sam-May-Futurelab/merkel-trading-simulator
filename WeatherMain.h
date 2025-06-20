@@ -25,8 +25,7 @@ private:
     //User interaction
     int getUserOption();
     void processUserOption(int userOption);
-    
-    //Utility functions
+      //Utility functions
     TimeFrame getTimeFrameFromUser();
     std::string getCountryFromUser();
     
